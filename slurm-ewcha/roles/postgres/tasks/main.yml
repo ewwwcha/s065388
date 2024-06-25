@@ -1,0 +1,64 @@
+---
+- name: "INSTALL PostgreSQL"
+  ansible.builtin.apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+      - python3
+      - python3-pip
+      - acl
+    state: "present"
+    update_cache: true
+
+- name: "Install Python packages"
+  pip:
+   name:
+     - psycopg2-binary
+   state: "present"
+
+- name: "Postgres start daemon"
+  ansible.builtin.service:
+    name: "postgresql"
+    state: "started"
+    enabled: true
+  become: true
+
+- name: "Create BD USER"
+  community.postgresql.postgresql_user:
+    name: "{{ DB_USER }}"
+    password: "{{ DB_PASSWORD }}"
+    state: "present"
+    role_attr_flags: SUPERUSER
+  become: true
+  become_user: postgres
+
+- name: "Create BD"
+  community.postgresql.postgresql_db:
+    name: "{{ DB_NAME }}"
+    state: "present"
+  become: true
+  become_user: postgres
+
+- name: "Create BD USER"
+  community.postgresql.postgresql_user:
+    name: "{{ DB_USER }}"
+    password: "{{ DB_PASSWORD }}"
+    state: "present"
+    role_attr_flags: SUPERUSER
+  become: true
+  become_user: postgres
+
+- name: "Grand all access"
+  community.postgresql.postgresql_privs:
+    type: "database"
+    database: "{{ DB_NAME }}"
+    roles: "{{ DB_USER }}"
+    grant_option: false
+    privs: all
+  become: true
+  become_user: postgres
+
+- name: "restart_postgres"
+  ansible.builtin.service:
+    name: postgresql
+    state: restarted

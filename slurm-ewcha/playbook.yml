@@ -1,0 +1,9 @@
+---
+- hosts: "all"
+  become: true
+  gather_facts: false
+  roles: 
+    - postgre
+    - nginx
+    - app
+...

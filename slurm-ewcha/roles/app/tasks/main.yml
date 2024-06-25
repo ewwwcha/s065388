@@ -1,0 +1,86 @@
+---
+- name: "Install Ubuntu base"
+  ansible.builtin.apt:
+    name:
+      - curl
+      - gpg
+      - libgdbm-dev
+      - libncurses5-dev
+      - automake
+      - libtool
+      - bison
+      - libffi-dev
+      - build-essential
+      - ruby-dev
+      - libmysqlclient-dev
+      - libxml2-dev
+      - zlib1g
+      - openssl
+      - libxslt-dev
+      - libffi-dev
+      - libxslt1-dev
+      - nodejs
+      - postgresql-server-dev-all
+    state: "present"
+    update_cache: true
+
+- name: "Install RVM"
+  ansible.builtin.shell: "bash -lc cd /home/vagrant"
+- name: "Install RVM1"
+  ansible.builtin.shell: "curl -sSL https://rvm.io/pkuczynski.asc | gpg --import - "
+- name: "Install RVM2"
+  ansible.builtin.shell: "curl -sSL https://get.rvm.io | bash -s stable"
+- name: "Install RVM3"
+  ansible.builtin.shell: "source .rvm/scripts/rvm"
+  ignore_errors: true
+- name: "Install RVM4"
+  ansible.builtin.shell: "rvm install 2.6.0"
+  ignore_errors: true
+#  become: true
+#  ansible.builtin.shell: |
+#    curl -sSL https://rvm.io/pkuczynski.asc | gpg --import - && curl -sSL https://get.rvm.io | bash -s stable && source .rvm/scripts/rvm && rvm install 2.6.0
+#  args:
+#    executable: /bin/bash
+#  chdir: "/home/vagrant"
+# become: true
+
+- name: ""
+  ansible.builtin.reboot:
+#    become: true
+- name: "Copy Source"
+  ansible.builtin.copy:
+    src: "files/app/"
+    dest: "/app/"
+    mode: "preserve"
+
+#- name: "Install GEM"
+#  ansible.builtin.shell:
+#      su -l vagrant && \
+#      cd /app && \
+#      bundle config build.nokogiri --use-system-libraries && \
+#      bundle install --clean --no-cache --without development --force --gemfile=/app/Gemfile
+#    chdir: "/app"
+#  ignore_errors: true
+
+- name: "Install BOUNDLER"
+  ansible.builtin.shell: "bash -lc  cd /app"
+- name: "Install BOUNDLER1"
+  ansible.builtin.shell: "bundle config build.nokogiri --use-system-libraries"
+- name: "Install BOUNDLER2"
+  ansible.builtin.shell: "bundle install --clean --no-cache --without development --force "
+
+- name: "Шаблонизируем"
+  ansible.builtin.template:
+    src: "ruby-puma.service.j2"
+    dest: "/etc/systemd/system/ruby-puma.service"
+    owner: "root"
+    group: "root"
+    mode: '644'
+    backup: true
+
+- name: "Демонизируем"
+  ansible.builtin.service:
+    name: "ruby-puma"
+    state: "started"
+    enabled: true
+...
